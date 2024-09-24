@@ -9,38 +9,89 @@
 | 05  | As a User, I want to add a new Item in a Bill                       | Bill     | -                   |
 | 06  | As a User, I want to assign an Item to any Friend added to the Bill | Bill     | -                   |
 
-# ERD
+# Diagrams
 
 ```mermaid
-erDiagram
-    BILL ||--|{ ITEM : "has many"
-    BILL }|--|{ MEMBER : contains
-    BILL {
-        string id
-        Member[] members
-        Item[] items
+---
+title: Class Diagram
+---
+classDiagram
+    class Bill {
+        - string title
+        - string description
+        - Person owner
+        - datetime created_at
+        - datetime updated_at
+        - Person[] members
+        - Item[] items
+
+        + getTotalPrice()
+        + addMember(Person member)
     }
-    ITEM ||--|{ MEMBER : "is assigned to"
-    ITEM {
-        string id
-        string description
-        number price
-        number quantity
-        Member[] assignees
-        SplitType splitType
+    class Item {
+        - string description
+        - float price
+        - int quantity
+        - Split[] splits
     }
-    MEMBER {
-        string name
-        string id
-        string color
-        number total
-    }
-    ITEM ||--|{ SPLIT_TYPE : "is split by"
-    SPLIT_TYPE {
-        string name
-        string id
-        string color
-        number total
+    class Person {
+        - string displayName
+        - string colorCode
     }
 
+    class Split {
+        - Person member
+        - float amount
+    }
+
+    Bill *-- Item
+    Bill *-- Person
+    Item *-- Split
+    Split o-- Person
 ```
+
+```mermaid
+---
+title: ERD
+---
+erDiagram
+    BILLS {
+        string id PK
+        string title
+        string description
+        uuid created_by FK "References MEMBERS(id)"
+        float total_amount
+        datetime created_at
+        datetime updated_at
+    }
+
+    BILL_ITEMS {
+        string id PK
+        int bill_id FK "References BILLS(id)"
+        string name
+        float price
+    }
+
+    MEMBERS {
+        string id PK
+        int bill_id FK "References BILLS(id)"
+        string color_code
+    }
+
+    SPLIT {
+        string id PK
+        int bill_item_id FK "References BILL_ITEMS(id)"
+        uuid assignee_id FK "References MEMBERS(id)"
+        number amount
+    }
+
+    BILLS ||--|{ BILL_ITEMS : "has"
+    BILLS ||--|{ MEMBERS : "includes"
+    BILL_ITEMS ||--|{ SPLIT : "assigned to"
+```
+
+Note:
+
+- Default splitType is EQUAL
+- splitType can be Amount/Percent/Share, and will only be displayed on client side
+- If splitType is changed, the splitValue is set to 0 for all
